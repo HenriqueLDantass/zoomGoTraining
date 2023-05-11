@@ -1,0 +1,266 @@
+import 'package:flutter/material.dart';
+import 'package:gotraining/modules/calendar/models/calendar_model.dart';
+import 'package:intl/intl.dart';
+import 'package:table_calendar/table_calendar.dart';
+
+class AgendamentoStore extends ChangeNotifier {
+  int currentStep = 0;
+  String? valueBusiess;
+  String? valueSolicitante;
+  String? valueTreinamento;
+  String? valueAvaliacao;
+  String? valueParcerias;
+  String? valueTema;
+
+  final lojaController = TextEditingController();
+  final pontosController = TextEditingController();
+  final limiteIncricoesController = TextEditingController();
+  final publicoPrevistoController = TextEditingController();
+  final observacaoController = TextEditingController();
+  final cargaHorariaController = TextEditingController();
+  final solicitanteController = TextEditingController();
+  final parceirosController = TextEditingController();
+  final controllerTimeInicio = TextEditingController();
+  final controllerTimeTermino = TextEditingController();
+  final dateCalendarioFormat = TextEditingController();
+  DateTime? date;
+  final formatCalendar = DateFormat("dd/MM/yyyy");
+  final format = DateFormat("HH:mm");
+
+  //calendario
+  CalendarFormat calendarFormat = CalendarFormat.week;
+  DateTime focusedDay = DateTime.now();
+  DateTime? selectedDate;
+  List<CalendarModel> listCalendar = [];
+
+  Map<String, List<CalendarModel>> mySelectedEvents = {};
+
+  addCalendar(context) {
+    if (lojaController.text.isEmpty &&
+        solicitanteController.text.isEmpty &&
+        parceirosController.text.isEmpty &&
+        controllerTimeInicio.text.isEmpty &&
+        dateCalendarioFormat.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Algum campo vazio'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+      //Navigator.pop(context);
+      return;
+    } else {
+      String selectedDateStr = DateFormat('yyyy-MM-dd').format(selectedDate!);
+      //
+      if (mySelectedEvents[selectedDateStr] != null) {
+        if (mySelectedEvents[selectedDateStr] == null) {
+          mySelectedEvents[selectedDateStr] = [];
+        }
+        DateTime horarioAgora =
+            DateTime.now().toUtc().subtract(const Duration(hours: 3));
+        mySelectedEvents[selectedDateStr]!.add(CalendarModel(
+            loja: lojaController.text.toString(),
+            parceiros: parceirosController.text.toString(),
+            solicitante: solicitanteController.text.toString(),
+            timeInicio: controllerTimeInicio.text.toString(),
+            timeTermino: controllerTimeTermino.text.toString(),
+            calendario: dateCalendarioFormat.text.toString(),
+            local: valueBusiess.toString(),
+            treinamento: valueTreinamento.toString(),
+            tema: valueTema.toString(),
+            horario: DateFormat('HH:mm').format(horarioAgora),
+            checking: false));
+        notifyListeners();
+      } else {
+        String selectedDateStr = DateFormat('yyyy-MM-dd').format(selectedDate!);
+        if (mySelectedEvents[selectedDateStr] == null) {
+          mySelectedEvents[selectedDateStr] = [];
+        }
+        DateTime horarioAgora =
+            DateTime.now().toUtc().subtract(const Duration(hours: 3));
+        mySelectedEvents[selectedDateStr] = [
+          CalendarModel(
+              loja: lojaController.text.toString(),
+              parceiros: parceirosController.text.toString(),
+              solicitante: solicitanteController.text.toString(),
+              timeInicio: controllerTimeInicio.text.toString(),
+              timeTermino: controllerTimeTermino.text.toString(),
+              calendario: dateCalendarioFormat.text.toString(),
+              local: valueBusiess.toString(),
+              treinamento: valueTreinamento.toString(),
+              tema: valueTema.toString(),
+              horario: DateFormat('HH:mm').format(horarioAgora),
+              checking: false)
+        ];
+        notifyListeners();
+      }
+
+      lojaController.clear();
+      parceirosController.clear();
+      solicitanteController.clear();
+      dateCalendarioFormat.clear();
+      controllerTimeInicio.clear();
+      controllerTimeTermino.clear();
+      currentStep = 0;
+
+      return;
+    }
+  }
+
+  continueStep() {
+    if (currentStep < 4) {
+      currentStep = currentStep + 1;
+      notifyListeners(); //currentStep+=1;
+    }
+  }
+
+  cancelStep() {
+    if (currentStep > 0) {
+      currentStep = currentStep - 1;
+      notifyListeners();
+    }
+  }
+
+  Widget controlBuilders(context, details) {
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          ElevatedButton(
+            onPressed: details.onStepContinue,
+            child: const Text('Proximo'),
+          ),
+          const SizedBox(width: 10),
+          OutlinedButton(
+            onPressed: details.onStepCancel,
+            child: const Text('Voltar'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget controlLocal(context, details) {
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          ElevatedButton(
+            onPressed: details.onStepContinue,
+            child: const Text('Proximo'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  onStepTapped(int value) {
+    currentStep = value;
+    notifyListeners();
+  }
+
+  verificacaoStep(context, details) {
+    if (currentStep == 0) {
+      controlLocal(context, details);
+    } else if (currentStep < 3) {
+      controlConcluir(context, details);
+    } else {
+      controlConcluir(context, details);
+    }
+  }
+
+//Calendario
+
+  AgendamentoStore() {
+    selectedDate = focusedDay;
+    notifyListeners();
+  }
+
+  List listOfDayEvents(DateTime dateTime) {
+    if (mySelectedEvents[DateFormat('yyyy-MM-dd').format(dateTime)] != null) {
+      return mySelectedEvents[DateFormat('yyyy-MM-dd').format(dateTime)]!;
+    } else {
+      return [];
+    }
+  }
+
+  Widget controlConcluir(context, details) {
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          ElevatedButton(
+            onPressed: () {
+              addCalendar(context);
+              currentStep = 0;
+              Navigator.pop(context);
+            },
+            child: const Text('Concluir'),
+          ),
+          const SizedBox(width: 10),
+          OutlinedButton(
+            onPressed: details.onStepCancel,
+            child: const Text('Voltar'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  final tipoTreinamento = ValueNotifier('');
+  final tipoAvaliacaoTreinamento = ValueNotifier('');
+  final tipoParceiros = ValueNotifier('');
+  final tipoTema = ValueNotifier('');
+  final tipoSolicitante = ValueNotifier('');
+  final tipoBusinessCenter = ValueNotifier('');
+
+  final List<String> treinamentoTipo = [
+    'On The Job',
+    'Presencial',
+    'Online',
+    'Evento',
+    'Passo a Passo',
+    'Supervisao',
+  ];
+  final List<String> temaTreinamentoList = [
+    'Zoom 2',
+    'Filmes Disney',
+    'Conhecimentos Gerais',
+    'Customer Sucess',
+    'Customer Experience',
+    'Qa',
+  ];
+  final List<String> solicitanteList = [
+    'Marketing',
+    'Equipe de Campo',
+    'Trade Marketing',
+    'Treinamento',
+    'Recursos Humanos',
+    'Customer Sucess',
+    'Customer Experience',
+  ];
+  final List<String> businessCenterList = [
+    'Brasil',
+    'Colombia',
+    'Chile',
+    'Guatemala',
+    'Caribe',
+    'Japao',
+    'italia',
+  ];
+  final List<String> avaliacaoList = [
+    'Avaliação Bemol',
+    'Avaliação Afip',
+    'Avaliação Reação',
+    'Avaliação do conhecimento',
+  ];
+  final List<String> parceirosList = [
+    'Parceiro x',
+    'Parceiro y',
+    'Parceiro z',
+    'Parceiro xa',
+  ];
+}

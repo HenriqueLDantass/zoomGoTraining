@@ -1,0 +1,150 @@
+GestureDetector(
+  onTap: () {
+    setState(() {
+      store.activePage = 0;
+    });
+    store.scroll.animateTo(
+        MediaQuery.of(context).size.width * 0,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.linear);
+  },
+  child: Padding(
+    padding: const EdgeInsets.symmetric(horizontal: 8.0),
+    child: Column(
+      children: [
+        Container(
+          height: 60,
+          width: 150,
+          color: Colors.amber,
+        ),
+        Container(
+          height: 6,
+          width: 150,
+          color: store.activePage == 0
+              ? Colors.red
+              : Colors.amber,
+        ),
+      ],
+    ),
+  ),
+),
+GestureDetector(
+  onTap: () {
+    setState(() {
+      store.activePage = 1;
+    });
+    store.scroll.animateTo(
+        MediaQuery.of(context).size.width * 1,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.linear);
+  },
+  child: Padding(
+    padding: const EdgeInsets.symmetric(horizontal: 8.0),
+    child: Column(
+      children: [
+        Container(
+          height: 60,
+          width: 150,
+          color: Colors.amber,
+        ),
+        Container(
+          height: 6,
+          width: 150,
+          color: store.activePage == 1
+              ? Colors.red
+              : Colors.amber,
+        ),
+      ],
+    ),
+  ),
+),
+GestureDetector(
+  onTap: () {
+    setState(() {
+      store.activePage = 2;
+    });
+
+    store.scroll.animateTo(
+        MediaQuery.of(context).size.width * 2,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.linear);
+  },
+  child: Padding(
+    padding: const EdgeInsets.symmetric(horizontal: 8.0),
+    child: Column(
+      children: [
+        Container(
+          height: 60,
+          width: 150,
+          color: Colors.amber,
+        ),
+        Container(
+          height: 6,
+          width: 150,
+          color: store.activePage == 2
+              ? Colors.red
+              : Colors.amber,
+        ),
+      ],
+    ),
+  ),
+)
+
+
+
+
+
+
+
+
+
+
+
+class LocalDataSource {
+  Future<void> init() async {
+    String path = '';
+
+    path = await getDatabasesPath();
+    String dbPath = path + "dboff.db";
+    deleteDatabase(dbPath).then((value) => print("Banco apagado"));
+    openDatabase(
+      dbPath,
+      version: 1,
+      onCreate: (db, version) {
+        db.execute("""
+CREATE TABLE agendamento (id INTEGER PRIMARY KEY AUTOINCREMENT,nome TEXT, data TEXT
+
+)
+""");
+        db.close();
+      },
+    );
+  }
+
+  Future<List<Map<String, Object?>>> getAgendamentoById(String nome) async {
+    String path = '';
+
+    path = await getDatabasesPath();
+    String dbPath = path + "dboff.db";
+
+    Database db = await openDatabase(dbPath);
+    var resultar =
+        await db.rawQuery("SELECT * FROM agendamento WHERE nome = ?", [nome]);
+
+    // db.execute("SELECT * FROM agendamento WHERE nome = ?", [nome]);
+    db.close();
+    return resultar;
+  }
+
+  insertAgendamentoById(String nome) async {
+    String path = '';
+
+    path = await getDatabasesPath();
+    String dbPath = path + "dboff.db";
+
+    Database db = await openDatabase(dbPath);
+    db.execute("INSERT INTO agendamento (nome, data) VALUES (?,?)",
+        [nome, DateTime.now().toString()]);
+    db.close();
+  }
+}
